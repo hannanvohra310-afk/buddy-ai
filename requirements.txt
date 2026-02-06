@@ -1,0 +1,31 @@
+streamlit
+python-dotenv
+requests
+
+langchain
+langchain-community
+langchain-core
+langchain-openai
+langchain-text-splitters
+
+pinecone-client
+langchain-pinecone
+
+pypdf
+tiktoken
+
+# Authentication
+bcrypt
+pyjwt
+
+# Database
+sqlalchemy
+alembic
+
+# Utilities
+emoji
+pandas
+
+# Testing
+pytest
+pytest-cov
