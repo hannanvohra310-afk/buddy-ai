@@ -69,7 +69,9 @@ class AuthHandler:
 
     def _ensure_default_school(self):
         """Ensure at least one school exists for testing"""
-        if self.db_session.query(School).count() == 0:
+        demo_school = self.db_session.query(School).filter_by(email_domain="demo.school.com").first()
+
+        if not demo_school:
             # Add a default demo school
             demo_school = School(
                 name="Demo School",
@@ -79,8 +81,8 @@ class AuthHandler:
             self.db_session.commit()
             logger.info("Created default demo school")
 
-            # Also create a demo student
-            self._ensure_demo_student(demo_school.id)
+        # Always ensure demo student exists
+        self._ensure_demo_student(demo_school.id)
 
     def _ensure_demo_student(self, school_id: int):
         """Ensure demo student exists for testing"""
