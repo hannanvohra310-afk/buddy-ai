@@ -35,6 +35,18 @@ PINECONE_INDEX = "buddy-ai-index"
 
 load_dotenv(APP_DIR / ".env")
 
+
+def get_secret(key: str, default: str = None) -> str:
+    """Get secret from Streamlit secrets or environment variables"""
+    # Try Streamlit secrets first (for cloud deployment)
+    try:
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    # Fall back to environment variables (for local development)
+    return os.getenv(key, default)
+
 # Page config - MUST be first Streamlit command
 st.set_page_config(
     page_title="Buddy AI - Career Counsellor",
@@ -154,8 +166,15 @@ try:
             )
             docs = text_splitter.split_documents(all_docs)
 
-            embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-            pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+            # Get API keys from secrets or env
+            openai_key = get_secret("OPENAI_API_KEY")
+            pinecone_key = get_secret("PINECONE_API_KEY")
+
+            if not openai_key or not pinecone_key:
+                raise ValueError("Missing API keys - check secrets configuration")
+
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_key)
+            pc = Pinecone(api_key=pinecone_key)
             index = pc.Index(PINECONE_INDEX)
 
             vectorstore = PineconeVectorStore(index=index, embedding=embeddings, text_key="text")
@@ -165,7 +184,7 @@ try:
             if stats["total_vector_count"] == 0:
                 vectorstore.add_documents(docs)
 
-            llm = ChatOpenAI(model="gpt-4o-mini", temperature=LLM_TEMPERATURE)
+            llm = ChatOpenAI(model="gpt-4o-mini", temperature=LLM_TEMPERATURE, api_key=openai_key)
 
             from prompts import get_system_prompt
             base_system_prompt = get_system_prompt()

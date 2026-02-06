@@ -2,12 +2,24 @@
 import streamlit as st
 from pathlib import Path
 import sys
+import os
 
 # Add parent directory to path for imports
 parent_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(parent_dir))
 
 from auth import AuthHandler
+
+
+def get_secret(key: str, default: str = None) -> str:
+    """Get secret from Streamlit secrets or environment variables"""
+    try:
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
 
 # Page config
 st.set_page_config(
@@ -20,7 +32,11 @@ st.set_page_config(
 # Initialize auth handler
 @st.cache_resource
 def get_auth_handler():
-    return AuthHandler(db_path=str(parent_dir / "data" / "buddy_ai.db"))
+    jwt_secret = get_secret("JWT_SECRET_KEY")
+    return AuthHandler(
+        db_path=str(parent_dir / "data" / "buddy_ai.db"),
+        secret_key=jwt_secret
+    )
 
 auth_handler = get_auth_handler()
 
