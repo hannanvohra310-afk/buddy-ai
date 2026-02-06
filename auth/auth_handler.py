@@ -79,6 +79,28 @@ class AuthHandler:
             self.db_session.commit()
             logger.info("Created default demo school")
 
+            # Also create a demo student
+            self._ensure_demo_student(demo_school.id)
+
+    def _ensure_demo_student(self, school_id: int):
+        """Ensure demo student exists for testing"""
+        demo_email = "test@demo.school.com"
+        existing = self.db_session.query(Student).filter_by(email=demo_email).first()
+
+        if not existing:
+            # Create demo student with pre-set password "Demo@123"
+            demo_student = Student(
+                email=demo_email,
+                password_hash=self._hash_password("Demo@123"),
+                school_id=school_id,
+                grade=9,
+                is_active=True,
+                password_set=True
+            )
+            self.db_session.add(demo_student)
+            self.db_session.commit()
+            logger.info("Created demo student: test@demo.school.com with password Demo@123")
+
     def _hash_password(self, password: str) -> str:
         """Hash a password using bcrypt"""
         salt = bcrypt.gensalt()
